@@ -1,5 +1,10 @@
 package util
 
+import (
+	"bufio"
+	"io"
+)
+
 type Grid[T any] struct {
 	data   []T
 	Width  int
@@ -85,6 +90,16 @@ func GridFromStrings(strings ...string) Grid[rune] {
 	slices := make([][]rune, len(strings))
 	for i := 0; i < len(strings); i++ {
 		slices[i] = []rune(strings[i])
+	}
+
+	return GridFromSlices(slices...)
+}
+
+func GridFromReader(r io.Reader) Grid[byte] {
+	slices := make([][]byte, 0)
+	sc := bufio.NewScanner(r)
+	for sc.Scan() {
+		slices = append(slices, sc.Bytes())
 	}
 
 	return GridFromSlices(slices...)
@@ -240,4 +255,3 @@ func (g *Grid[T]) RegionValues(ox, oy int, w, h int) []GridItem[T] {
 
 	return res
 }
-

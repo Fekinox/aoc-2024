@@ -14,6 +14,9 @@ var (
 	SW = Point{X: -1, Y: 1}
 	W  = Point{X: -1, Y: 0}
 	NW = Point{X: -1, Y: -1}
+
+	CardinalDirections = []Point{N, E, S, W}
+	AllDirections = []Point{N, NE, E, SE, S, SW, W, NW}
 )
 
 func (p Point) Add(other Point) Point {

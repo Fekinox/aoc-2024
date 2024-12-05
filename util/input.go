@@ -2,37 +2,70 @@ package util
 
 import (
 	"bufio"
+	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
-func ReadLines(path string) []string {
-	f, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
+func ReadLines(r io.Reader) []string {
 	res := make([]string, 0)
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(r)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
 	for scanner.Scan() {
 		res = append(res, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println(err)
 	}
 
 	return res
 }
 
-func ReadNewlineSeparatedGroups(path string) [][]string {
-	f, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+type GroupReader struct {
+	scanner *bufio.Scanner
+	currentGroup []string
+	err error
+}
 
+func NewGroupReader(r io.Reader) *GroupReader {
+	scanner := bufio.NewScanner(r)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+	return &GroupReader{
+		scanner: scanner,
+		currentGroup: []string{},
+	}
+}
+
+func (g *GroupReader) Scan() bool {
+	g.currentGroup = make([]string, 0)
+	for g.scanner.Scan() {
+		if err := g.scanner.Err(); err != nil {
+			g.err = err
+			return false
+		}
+		t := g.scanner.Text()
+		if t == "" {
+			return true
+		}
+		g.currentGroup = append(g.currentGroup, t)
+	}
+	return false
+}
+
+func (g *GroupReader) Group() []string {
+	return g.currentGroup
+}
+
+func (g *GroupReader) Err() error {
+	return g.err
+}
+
+func ReadNewlineSeparatedGroups(r io.Reader) [][]string {
 	res := make([][]string, 0)
 	curGroup := make([]string, 0)
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		t := scanner.Text()
 		if t == "" {
@@ -48,21 +81,15 @@ func ReadNewlineSeparatedGroups(path string) [][]string {
 	return res
 }
 
-func ReadString(path string) string {
-	f, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
+func ReadString(r io.Reader) string {
 	var buf strings.Builder
-	_, err = io.Copy(&buf, f)
+	_, err := io.Copy(&buf, r)
 	if err != nil {
 		panic(err)
 	}
 	return buf.String()
 }
 
-func ReadGrid(path string) Grid[rune] {
-	return GridFromStrings(ReadLines(path)...)
+func ReadGrid(r io.Reader) Grid[rune] {
+	return GridFromStrings(ReadLines(r)...)
 }
