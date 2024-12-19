@@ -2,7 +2,10 @@ package util
 
 import (
 	"bufio"
+	"bytes"
+	"fmt"
 	"io"
+	"os"
 )
 
 type Grid[T any] struct {
@@ -96,13 +99,13 @@ func GridFromStrings(strings ...string) Grid[rune] {
 }
 
 func GridFromReader(r io.Reader) Grid[byte] {
-	slices := make([][]byte, 0)
+	rows := make([][]byte, 0)
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
-		slices = append(slices, sc.Bytes())
+		rows = append(rows, bytes.Clone(sc.Bytes()))
 	}
 
-	return GridFromSlices(slices...)
+	return GridFromSlices(rows...)
 }
 
 func (g *Grid[T]) InBounds(x, y int) bool {
@@ -254,4 +257,20 @@ func (g *Grid[T]) RegionValues(ox, oy int, w, h int) []GridItem[T] {
 	}
 
 	return res
+}
+
+func (g *Grid[T]) Fprint(w io.Writer, cell func (v T, x, y int) rune) error {
+	for y := range g.Height {
+		for x := range g.Width {
+			_, err := fmt.Fprintf(w, "%c", cell(g.MustGet(x, y), x, y))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (g *Grid[T]) Print(cell func(v T, x, y int) rune) error {
+	return g.Fprint(os.Stdout, cell)
 }

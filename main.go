@@ -5,8 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"os"
+	"runtime"
+	"runtime/pprof"
 	"slices"
 	"time"
 )
@@ -14,6 +17,10 @@ import (
 var inputFile = flag.String("i", "input", "Input file")
 var problem = flag.Int("p", -1, "Problem number (omit to run all problems)")
 var trials = flag.Int("t", 1, "Number of trials")
+var variant = flag.String("v", "default", "Problem variant to run")
+
+var cpuprof = flag.String("cpuprofile", "", "write cpu profile to `file`")
+var memprof = flag.String("memprofile", "", "write mem profile to `file`")
 
 type ProblemFunc func(in io.Reader, out io.Writer)
 
@@ -53,6 +60,37 @@ var problems = []ProblemFunc{
 	Problem25,
 }
 
+var variants = map[int]map[string]ProblemFunc{
+	6: {
+		"gosper":  Problem06ComplexG,
+		"brent":   Problem06ComplexB,
+		"floyd":   Problem06ComplexTH,
+		"simple":  Problem06Simple,
+		"complex": Problem06Complex,
+	},
+	7: {
+		"bfs":   Problem07BFS,
+		"dfs":   Problem07DFS,
+		"stack": Problem07Stack,
+	},
+	8: {
+		"hashmap": Problem08Hashmap,
+		"array":   Problem08Array,
+	},
+	9: {
+		"normal": Problem09Unwashed,
+		"heaps":  Problem09MultiHeaps,
+	},
+	11: {
+		"string":   Problem11String,
+		"nostring": Problem11NoString,
+	},
+	13: {
+		"regex":   Problem13Regex,
+		"noregex": Problem13NoRegex,
+	},
+}
+
 // Wrap a problem to catch panics and recover gracefully
 func WrapProblem(p ProblemFunc, problemNumber int, input string) (runtime float64, err error) {
 	var startTime time.Time
@@ -86,7 +124,7 @@ func RunProblem(prob int, input string) {
 	if *trials <= 1 {
 		fmt.Printf("Runtime: %v ms\n", runtime)
 	} else {
-		stats, err := Profile(problems[prob], prob+1, input)
+		stats, err := Profile(problems[prob], prob+1, input, false)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -100,7 +138,47 @@ func RunProblem(prob int, input string) {
 	}
 }
 
-func Profile(p ProblemFunc, problemNumber int, input string) (stats Stats, err error) {
+func RunProblemVariant(prob int, input string, variant string, silent bool) {
+	varList, ok := variants[prob+1]
+	if !ok {
+		fmt.Println("Solution does not have additional variants")
+		return
+	}
+	if variant == "all" {
+		for vn := range varList {
+			RunProblemVariant(prob, input, vn, true)
+		}
+		return
+	}
+	vr, ok := varList[variant]
+	if !ok {
+		fmt.Printf("Variant %v does not exist\n", variant)
+		return
+	}
+	fmt.Printf("Running problem %v... (variant %v)\n", prob+1, variant)
+	runtime, err := WrapProblem(vr, prob+1, input)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if *trials <= 1 {
+		fmt.Printf("Runtime: %v ms\n", runtime)
+	} else {
+		stats, err := Profile(vr, prob+1, input, silent)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("Trials: %v ms\n", *trials)
+		fmt.Printf("Min: %v ms\n", stats.Min)
+		fmt.Printf("Median: %v ms\n", stats.Median)
+		fmt.Printf("Mean: %v ms\n", stats.Mean)
+		fmt.Printf("Max: %v ms\n", stats.Max)
+		fmt.Printf("StdDev: %v ms\n", stats.StdDev)
+	}
+}
+
+func Profile(p ProblemFunc, problemNumber int, input string, silent bool) (stats Stats, err error) {
 	count := 0
 	mean := 0.0
 	m2 := 0.0
@@ -131,7 +209,9 @@ func Profile(p ProblemFunc, problemNumber int, input string) (stats Stats, err e
 		delta2 := samp - mean
 		m2 = delta * delta2
 
-		fmt.Printf("Trial %v: %v ms\n", i+1, samp)
+		if !silent {
+			fmt.Printf("Trial %v: %v ms\n", i+1, samp)
+		}
 	}
 
 	sampleVariance := m2 / float64(count)
@@ -155,14 +235,41 @@ func Profile(p ProblemFunc, problemNumber int, input string) (stats Stats, err e
 
 func main() {
 	flag.Parse()
+	if *cpuprof != "" {
+		f, err := os.Create(*cpuprof)
+		if err != nil {
+			log.Fatalln("Could not create CPU profile", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatalln("could not start CPU profile", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	if *problem == -1 {
 		for i := range problems {
 			RunProblem(i, *inputFile)
 		}
 	} else if *problem >= 1 && *problem <= 25 {
-		RunProblem(*problem-1, *inputFile)
+		if *variant != "default" {
+			RunProblemVariant(*problem-1, *inputFile, *variant, false)
+		} else {
+			RunProblem(*problem-1, *inputFile)
+		}
 	} else {
 		flag.Usage()
+	}
+
+	if *memprof != "" {
+		f, err := os.Create(*memprof)
+		if err != nil {
+			log.Fatalln("Could not create memory profile", err)
+		}
+		defer f.Close()
+		runtime.GC()
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatalln("Could not write memory profile", err)
+		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 )
 
 var xmas = []byte("XMAS")
+
 const CELL_WIDTH = 64
 
 func Problem04(in io.Reader, out io.Writer) {
@@ -42,8 +43,8 @@ func Problem04(in io.Reader, out io.Writer) {
 	}
 
 	sub := func(ox, oy int, ow, oh int) (silver, gold int64) {
-		for y := oy; y < min(input.Height, oy + oh); y++ {
-			for x := ox; x < min(input.Width, ox + ow); x++ {
+		for y := oy; y < min(input.Height, oy+oh); y++ {
+			for x := ox; x < min(input.Width, ox+ow); x++ {
 				var c = input.MustGet(x, y)
 				if c == 'X' {
 					for _, d := range util.AllDirections {

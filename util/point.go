@@ -1,9 +1,11 @@
 package util
 
-type Point struct {
-	X int64
-	Y int64
+type Vector[T int | int8 | int16 | int32 | int64] struct {
+	X T
+	Y T
 }
+
+type Point Vector[int64]
 
 var (
 	N  = Point{X: 0, Y: -1}

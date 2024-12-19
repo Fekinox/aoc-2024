@@ -14,7 +14,7 @@ import (
 const JOB_SIZE = 9999999
 
 type Pair struct {
-	First int64
+	First  int64
 	Second int64
 }
 
@@ -34,7 +34,7 @@ func Problem05Par(in io.Reader, out io.Writer) {
 	}
 
 	sub := func(i, j int) (silver, gold int64) {
-		next:
+	next:
 		for _, l := range groups[1][i:min(j, len(groups[1]))] {
 			nums := strings.Split(l, ",")
 			convNums := make([]int64, len(nums))
@@ -42,7 +42,7 @@ func Problem05Par(in io.Reader, out io.Writer) {
 				convNums[j] = util.MustParseInt(n)
 			}
 
-			for j := range len(convNums)-1 {
+			for j := range len(convNums) - 1 {
 				if _, ok := comesBefore[Pair{First: convNums[j], Second: convNums[j+1]}]; !ok {
 					slices.SortFunc(convNums, func(x int64, y int64) int {
 						if x == y {
@@ -79,7 +79,6 @@ func Problem05Par(in io.Reader, out io.Writer) {
 
 	wg.Wait()
 
-
 	fmt.Fprintln(out, "silver:", silver)
 	fmt.Fprintln(out, "gold:", gold)
 }
@@ -96,7 +95,7 @@ func Problem05Seq(in io.Reader, out io.Writer) {
 		comesBefore.Set(int(util.MustParseInt(p[0])), int(util.MustParseInt(p[1])), true)
 	}
 
-	next:
+next:
 	for _, l := range groups[1] {
 		nums := strings.Split(l, ",")
 		convNums := make([]int, len(nums))
@@ -104,7 +103,7 @@ func Problem05Seq(in io.Reader, out io.Writer) {
 			convNums[j] = int(util.MustParseInt(n))
 		}
 
-		for j := range len(convNums)-1 {
+		for j := range len(convNums) - 1 {
 			if ok := comesBefore.MustGet(int(convNums[j]), int(convNums[j+1])); !ok {
 				slices.SortFunc(convNums, func(x int, y int) int {
 					if x == y {

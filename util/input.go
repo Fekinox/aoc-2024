@@ -93,3 +93,13 @@ func ReadString(r io.Reader) string {
 func ReadGrid(r io.Reader) Grid[rune] {
 	return GridFromStrings(ReadLines(r)...)
 }
+
+func SplitNumbers(s string, sep string) []int64 {
+	splits := strings.Split(s, sep)
+	nums := make([]int64, len(splits))
+	for i, sp := range splits {
+		nums[i] = MustParseInt(sp)
+	}
+
+	return nums
+}
