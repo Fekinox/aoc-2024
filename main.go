@@ -89,6 +89,10 @@ var variants = map[int]map[string]ProblemFunc{
 		"regex":   Problem13Regex,
 		"noregex": Problem13NoRegex,
 	},
+	21: {
+		"int64":  Problem21Main,
+		"bignum": Problem21Bignum,
+	},
 }
 
 // Wrap a problem to catch panics and recover gracefully
