@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"slices"
 	"time"
@@ -93,6 +94,12 @@ var variants = map[int]map[string]ProblemFunc{
 		"int64":  Problem21Main,
 		"bignum": Problem21Bignum,
 	},
+	23: {
+		"naive": Problem23BFS,
+		"numeric": Problem23Numeric,
+		"bron": Problem23BronKerbosch,
+		"triangle": Problem23TriangleMaxxing,
+	},
 }
 
 // Wrap a problem to catch panics and recover gracefully
@@ -102,11 +109,11 @@ func WrapProblem(p ProblemFunc, problemNumber int, input string) (runtime float6
 		if r := recover(); r != nil {
 			runtime = float64(time.Now().Sub(startTime).Nanoseconds()) / (1000 * 1000)
 			err = fmt.Errorf("Panic: %v", r)
+			fmt.Println(string(debug.Stack()))
 		}
 	}()
 
 	dest := fmt.Sprintf("input/aoc%02d/%v", problemNumber, input)
-	fmt.Printf("Opening %v...\n", dest)
 	f, err := os.Open(dest)
 	if err != nil {
 		return 0.0, err

@@ -16,7 +16,6 @@ var mulRegex = regexp.MustCompile("mul\\((\\d+),(\\d+)\\)")
 func addMuls(data []byte) int64 {
 	var res int64
 	for _, m := range mulRegex.FindAllSubmatch(data, -1) {
-		fmt.Println(string(m[0]))
 		res += util.MustParseInt(string(m[1]))
 		util.MustParseInt(string(m[2]))
 	}

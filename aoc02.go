@@ -176,8 +176,8 @@ outer:
 				(i == 1 || newDelta*deltas[0] > 0) &&
 				(i == len(nums)-2 || newDelta*deltas[len(deltas)-1] > 0) {
 				safeGold++
-				fmt.Fprintln(out, loops)
-				fmt.Fprintln(out, min(len(nums)-2, longestPrefix+1)-max(1, len(nums)-2-longestSuffix)+1)
+				// fmt.Fprintln(out, loops)
+				// fmt.Fprintln(out, min(len(nums)-2, longestPrefix+1)-max(1, len(nums)-2-longestSuffix)+1)
 				continue outer
 			}
 			loops++

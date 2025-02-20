@@ -76,5 +76,5 @@ func Problem12StackFloodFill(in io.Reader, out io.Writer) {
 }
 
 func Problem12(in io.Reader, out io.Writer) {
-	Problem12SpanFloodFill(in, out)
+	Problem12StackFloodFill(in, out)
 }

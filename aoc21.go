@@ -306,7 +306,7 @@ func Problem21Main(in io.Reader, out io.Writer) {
 		}
 	}
 	rawTransitions := func(m map[byte]pos, src, dst byte, forbidden pos) [][]byte {
-		res := [][]byte{nil}
+		var res [][]byte
 		srcPos, dstPos := m[src], m[dst]
 		var hc, vc byte
 		if srcPos.X > dstPos.X {
@@ -333,44 +333,40 @@ func Problem21Main(in io.Reader, out io.Writer) {
 			dy = 1
 		}
 
-		for range delX + delY {
-			var nextRes [][]byte
-			for _, p := range res {
-				if delX > 0 {
-					nextRes = append(nextRes,
-						append(bytes.Clone(p), hc),
-					)
-				}
-				if delY > 0 {
-					nextRes = append(nextRes,
-						append(bytes.Clone(p), vc),
-					)
-				}
+		hFirst, vFirst := make([]byte, delX+delY), make([]byte, delX+delY)
+		for i := range delX + delY {
+			if i < delX {
+				hFirst[i] = hc
+			} else {
+				hFirst[i] = vc
 			}
-			res = nextRes
-		}
-
-		var filteredRes [][]byte
-	outer:
-		for _, p := range res {
-			var hct, vct int
-			for _, b := range p {
-				if b == hc {
-					hct++
-				} else {
-					vct++
-				}
-				c := pos{X: srcPos.X + hct*dx, Y: srcPos.Y + vct*dy}
-				if c == forbidden {
-					continue outer
-				}
-			}
-			if hct == delX && vct == delY {
-				filteredRes = append(filteredRes, append(bytes.Clone(p), 'A'))
+			if i < delY {
+				vFirst[i] = vc
+			} else {
+				vFirst[i] = hc
 			}
 		}
+		if dx == 0 || dy == 0 {
+			return [][]byte{hFirst}
+		}
+		hCorner, vCorner :=
+			pos{
+				X: srcPos.X + dx*delX,
+				Y: srcPos.Y,
+			},
+			pos{
+				X: srcPos.X,
+				Y: srcPos.Y + dy*delY,
+			}
 
-		return filteredRes
+		if hCorner != forbidden {
+			res = append(res, append(hFirst, 'A'))
+		}
+		if vCorner != forbidden {
+			res = append(res, append(vFirst, 'A'))
+		}
+
+		return res
 	}
 
 	for _, sb := range []byte("0123456789A") {
@@ -623,5 +619,5 @@ func Problem21Naive(in io.Reader, out io.Writer) {
 }
 
 func Problem21(in io.Reader, out io.Writer) {
-	Problem21Bignum(in, out)
+	Problem21Main(in, out)
 }
